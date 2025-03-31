@@ -520,26 +520,8 @@ export default function TrashTruckGame() {
       };
     }, [stopMovementLoop]); // Correct dependency
 
-    // Add a debug indicator
-    const [debugInfo, setDebugInfo] = useState("");
-    useEffect(() => {
-      const debugInterval = setInterval(() => {
-        setDebugInfo(
-          `Action: ${currentActionRef.current ?? "None"}, FrameID: ${
-            animationFrameIdRef.current ?? "None"
-          }`
-        );
-      }, 200); // Update every 200ms
-      return () => clearInterval(debugInterval);
-    }, []);
-
     return (
       <div className="mt-4 select-none">
-        {/* Debug indicator */}
-        <div className="text-xs text-white opacity-70 mb-1 h-4">
-          {debugInfo}
-        </div>
-
         <div className="flex flex-row justify-center gap-2 mb-2">
           <button
             id="touch-up"
