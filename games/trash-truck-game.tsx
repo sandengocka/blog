@@ -445,12 +445,10 @@ export default function TrashTruckGame() {
     const animationFrameIdRef = useRef<number | null>(null);
     const currentActionRef = useRef<string | null>(null);
 
-    // Refs for direct DOM manipulation of buttons
-    const upButtonRef = useRef<HTMLButtonElement>(null);
-    const downButtonRef = useRef<HTMLButtonElement>(null);
-    const leftButtonRef = useRef<HTMLButtonElement>(null);
-    const rightButtonRef = useRef<HTMLButtonElement>(null);
-    const pickupButtonRef = useRef<HTMLButtonElement>(null);
+    // State for tracking which button is active
+    const [activeButton, setActiveButton] = useState<
+      "up" | "down" | "left" | "right" | "pickup" | null
+    >(null);
 
     // Function to stop the movement loop
     const stopMovementLoop = useCallback(() => {
@@ -459,6 +457,7 @@ export default function TrashTruckGame() {
         animationFrameIdRef.current = null;
       }
       currentActionRef.current = null;
+      setActiveButton(null);
     }, []);
 
     // Function to start the movement loop
@@ -466,6 +465,7 @@ export default function TrashTruckGame() {
       (action: "up" | "down" | "left" | "right") => {
         // Set the current action before starting the loop
         currentActionRef.current = action;
+        setActiveButton(action);
 
         // Cancel any previous loop
         if (animationFrameIdRef.current) {
@@ -489,44 +489,6 @@ export default function TrashTruckGame() {
       [handleTouchControl]
     );
 
-    // Map of action to button ref for direct DOM manipulation
-    const buttonRefMap = {
-      up: upButtonRef,
-      down: downButtonRef,
-      left: leftButtonRef,
-      right: rightButtonRef,
-      pickup: pickupButtonRef,
-    };
-
-    // Add/remove active class directly on the DOM element
-    const setButtonActive = (
-      action: "up" | "down" | "left" | "right" | "pickup" | null
-    ) => {
-      // First, remove active class from all buttons
-      Object.values(buttonRefMap).forEach((ref) => {
-        if (ref.current) {
-          if (ref === pickupButtonRef) {
-            ref.current.classList.remove("bg-green-700");
-            ref.current.classList.add("bg-green-500");
-          } else {
-            ref.current.classList.remove("bg-blue-600");
-            ref.current.classList.add("bg-gray-800");
-          }
-        }
-      });
-
-      // Then add active class to the specific button
-      if (action && buttonRefMap[action]?.current) {
-        if (action === "pickup") {
-          buttonRefMap[action].current.classList.remove("bg-green-500");
-          buttonRefMap[action].current.classList.add("bg-green-700");
-        } else {
-          buttonRefMap[action].current.classList.remove("bg-gray-800");
-          buttonRefMap[action].current.classList.add("bg-blue-600");
-        }
-      }
-    };
-
     // Handle touch start
     const handleTouchStart = useCallback(
       (action: "up" | "down" | "left" | "right" | "pickup") =>
@@ -534,8 +496,8 @@ export default function TrashTruckGame() {
           e.preventDefault();
           e.stopPropagation();
 
-          // Set visual feedback immediately via DOM
-          setButtonActive(action);
+          // Set active button state
+          setActiveButton(action);
 
           // Call the action immediately
           handleTouchControl(action);
@@ -554,8 +516,8 @@ export default function TrashTruckGame() {
         e.preventDefault();
         e.stopPropagation();
 
-        // Clear visual feedback immediately via DOM
-        setButtonActive(null);
+        // Clear active button state
+        setActiveButton(null);
 
         // Stop the movement loop
         stopMovementLoop();
@@ -570,17 +532,35 @@ export default function TrashTruckGame() {
       };
     }, [stopMovementLoop]);
 
-    // Base class for all buttons
-    const baseButtonClass =
-      "w-16 h-16 flex items-center justify-center bg-opacity-50 rounded-full text-white text-2xl select-none touch-manipulation";
+    // Button style helpers
+    const getDirectionButtonClass = (
+      action: "up" | "down" | "left" | "right"
+    ) => {
+      const baseClass =
+        "w-16 h-16 flex items-center justify-center rounded-full text-white text-2xl select-none touch-manipulation";
+
+      if (activeButton === action) {
+        return `${baseClass} bg-blue-600 bg-opacity-20 border-2 border-white`;
+      }
+      return `${baseClass} bg-gray-800 bg-opacity-50`;
+    };
+
+    const getPickupButtonClass = () => {
+      const baseClass =
+        "w-16 h-16 flex items-center justify-center rounded-full text-white text-xl font-bold select-none touch-manipulation";
+
+      if (activeButton === "pickup") {
+        return `${baseClass} bg-green-700`;
+      }
+      return `${baseClass} bg-green-500 bg-opacity-50`;
+    };
 
     return (
       <div className="mt-4 select-none">
         <div className="flex flex-row justify-center gap-2 mb-2">
           <button
             id="touch-up"
-            ref={upButtonRef}
-            className={`${baseButtonClass} bg-gray-800`}
+            className={getDirectionButtonClass("up")}
             onTouchStart={handleTouchStart("up")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -592,8 +572,7 @@ export default function TrashTruckGame() {
         <div className="flex flex-row justify-center gap-2">
           <button
             id="touch-left"
-            ref={leftButtonRef}
-            className={`${baseButtonClass} bg-gray-800`}
+            className={getDirectionButtonClass("left")}
             onTouchStart={handleTouchStart("left")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -603,8 +582,7 @@ export default function TrashTruckGame() {
           </button>
           <button
             id="touch-pickup"
-            ref={pickupButtonRef}
-            className={`${baseButtonClass} bg-green-500 text-xl font-bold`}
+            className={getPickupButtonClass()}
             onTouchStart={handleTouchStart("pickup")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -614,8 +592,7 @@ export default function TrashTruckGame() {
           </button>
           <button
             id="touch-right"
-            ref={rightButtonRef}
-            className={`${baseButtonClass} bg-gray-800`}
+            className={getDirectionButtonClass("right")}
             onTouchStart={handleTouchStart("right")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -627,8 +604,7 @@ export default function TrashTruckGame() {
         <div className="flex flex-row justify-center gap-2 mt-2">
           <button
             id="touch-down"
-            ref={downButtonRef}
-            className={`${baseButtonClass} bg-gray-800`}
+            className={getDirectionButtonClass("down")}
             onTouchStart={handleTouchStart("down")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
