@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate, getBlogPosts } from "app/blog/utils";
+import { formatDate, getBlogPosts } from "app/(main)/blog/utils";
 
 // Add an array of blog slugs to hide
 const hiddenPosts: string[] = [
