@@ -1,4 +1,5 @@
 import { BlogPosts } from "@/components/posts";
+import { AuroraText } from "@/components/magicui/aurora-text";
 
 export default function Page() {
   return (
@@ -9,14 +10,19 @@ export default function Page() {
           <div className="flex flex-col space-y-3 text-neutral-800 dark:text-neutral-200">
             <p className="flex items-center">
               <span className="mr-2">🚀</span>
-              Building{" "}
+              Founder at{" "}
               <a
                 href="https://www.tryearmark.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mx-1 font-medium text-neutral-900 dark:text-neutral-100 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+                className="mx-1 font-semibold"
               >
-                earmark
+                <AuroraText
+                  speed={1}
+                  className="hover:underline decoration-blue-500"
+                >
+                  earmark
+                </AuroraText>
               </a>
             </p>
             <p className="flex items-center">
@@ -26,6 +32,10 @@ export default function Page() {
             <p className="flex items-center">
               <span className="mr-2">📱</span>
               Led iOS @mindbody
+            </p>
+            <p className="flex items-center">
+              <span className="mr-2">🎧</span>
+              Led Mobile @senselabs
             </p>
             <p className="mt-2">
               Obsessed with great UX and sharing learnings along the way ❤️

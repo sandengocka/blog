@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Trash Truck Game",
@@ -13,12 +14,14 @@ export default function GameLayout({
 }) {
   return (
     <div className="min-h-screen w-full relative">
-      <Link
-        href="/"
-        className="absolute top-4 left-4 transition-all hover:text-neutral-800 dark:hover:text-neutral-200 py-1 px-2"
+      <Button
+        variant="link"
+        size="sm"
+        className="absolute top-4 left-4 text-md"
+        asChild
       >
-        home
-      </Link>
+        <Link href="/">home</Link>
+      </Button>
       <main className="min-h-screen w-full flex items-center justify-center">
         {children}
       </main>

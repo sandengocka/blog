@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const navItems = {
   "/": {
@@ -23,13 +24,15 @@ export function Navbar() {
           <div className="flex flex-row space-x-0 pr-10">
             {Object.entries(navItems).map(([path, { name }]) => {
               return (
-                <Link
+                <Button
                   key={path}
-                  href={path}
-                  className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200 flex align-middle relative py-1 px-2 m-1"
+                  variant="link"
+                  size="sm"
+                  className="text-md"
+                  asChild
                 >
-                  {name}
-                </Link>
+                  <Link href={path}>{name}</Link>
+                </Button>
               );
             })}
           </div>
