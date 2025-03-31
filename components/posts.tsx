@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { formatDate, getBlogPosts } from "app/(main)/blog/utils";
+import { formatDate, getBlogPosts } from "@/app/(main)/blog/utils";
 
 // Add an array of blog slugs to hide
 const hiddenPosts: string[] = [
   // Add slugs of posts you want to hide, for example:
-  "vim",
-  "spaces-vs-tabs",
-  "static-typing",
+  // "vim",
+  // "spaces-vs-tabs",
+  // "static-typing",
 ];
 
 export function BlogPosts() {

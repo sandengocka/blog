@@ -1,5 +1,4 @@
-import type React from "react";
-import SmokeParticles from "./smoke-particles";
+import SmokeParticles from "@/games/components/smoke-particles";
 
 interface GameViewProps {
   truckPosition: { x: number; y: number };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { GameView } from "./components/game-view";
+import { GameView } from "@/games/components/game-view";
 import {
   barriers,
   gate as initialGate,
@@ -12,7 +12,7 @@ import {
   BIN_SIZE,
   TRUCK_SPEED,
   BIN_SPEED,
-} from "./game-config";
+} from "@/games/game-config";
 
 interface TrashBin {
   x: number;

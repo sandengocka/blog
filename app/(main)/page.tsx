@@ -1,4 +1,4 @@
-import { BlogPosts } from "components/posts";
+import { BlogPosts } from "@/components/posts";
 
 export default function Page() {
   return (
@@ -27,9 +27,8 @@ export default function Page() {
               <span className="mr-2">📱</span>
               Led iOS @mindbody
             </p>
-            <p className="flex items-center">
-              <span className="mr-2">❤️</span>
-              Obsessed with great UX and sharing learnings along the way
+            <p className="mt-2">
+              Obsessed with great UX and sharing learnings along the way ❤️
             </p>
           </div>
         </header>

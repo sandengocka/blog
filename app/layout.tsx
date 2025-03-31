@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { baseUrl } from "./sitemap";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
   },
 };
 
-const cx = (...classes) => classes.filter(Boolean).join(" ");
+const cx = (...classes: string[]) => classes.filter(Boolean).join(" ");
 
 export default function RootLayout({
   children,
@@ -40,15 +41,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={cx(
-        "text-black bg-white dark:text-white dark:bg-black",
-        GeistSans.variable,
-        GeistMono.variable
-      )}
-    >
-      <body className="antialiased">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
