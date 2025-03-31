@@ -14,8 +14,8 @@ export default function Page() {
         >
           <strong>earmark</strong>
         </a>{" "}
-        🚀 • Previously Director of Engineering @productplan, led iOS📱@mindbody
-        • Obsessed with great UX and sharing learnings along the way ❤️
+        🚀 Previously Director of Engineering @productplan, led iOS📱@mindbody
+        Obsessed with great UX and sharing learnings along the way ❤️
       </p>
       <div className="my-8">
         <BlogPosts />
