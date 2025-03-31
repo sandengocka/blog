@@ -444,11 +444,15 @@ export default function TrashTruckGame() {
     const [touchInterval, setTouchInterval] = useState<NodeJS.Timeout | null>(
       null
     );
+    const [activeAction, setActiveAction] = useState<string | null>(null);
 
     const handleTouchStart =
       (action: "up" | "down" | "left" | "right" | "pickup") =>
       (e: React.TouchEvent) => {
         e.preventDefault();
+
+        // Set the active action
+        setActiveAction(action);
 
         // Call the action immediately
         handleTouchControl(action);
@@ -457,7 +461,9 @@ export default function TrashTruckGame() {
         if (action === "pickup") return;
 
         // Clear any existing interval
-        if (touchInterval) clearInterval(touchInterval);
+        if (touchInterval) {
+          clearInterval(touchInterval);
+        }
 
         // Set up interval for continuous movement
         const interval = setInterval(() => {
@@ -468,18 +474,31 @@ export default function TrashTruckGame() {
       };
 
     const handleTouchEnd = () => {
+      setActiveAction(null);
+
       if (touchInterval) {
         clearInterval(touchInterval);
         setTouchInterval(null);
       }
     };
 
+    // Cleanup interval on unmount
+    useEffect(() => {
+      return () => {
+        if (touchInterval) {
+          clearInterval(touchInterval);
+        }
+      };
+    }, [touchInterval]);
+
     return (
       <div className="mt-4 select-none">
         <div className="flex flex-row justify-center gap-2 mb-2">
           <button
             id="touch-up"
-            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            className={`w-16 h-16 flex items-center justify-center ${
+              activeAction === "up" ? "bg-blue-600" : "bg-gray-800"
+            } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("up")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -490,7 +509,9 @@ export default function TrashTruckGame() {
         <div className="flex flex-row justify-center gap-2">
           <button
             id="touch-left"
-            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            className={`w-16 h-16 flex items-center justify-center ${
+              activeAction === "left" ? "bg-blue-600" : "bg-gray-800"
+            } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("left")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -499,14 +520,20 @@ export default function TrashTruckGame() {
           </button>
           <button
             id="touch-pickup"
-            className="w-16 h-16 flex items-center justify-center bg-green-500 bg-opacity-50 rounded-full text-white text-xl font-bold"
+            className={`w-16 h-16 flex items-center justify-center ${
+              activeAction === "pickup" ? "bg-green-700" : "bg-green-500"
+            } bg-opacity-50 rounded-full text-white text-xl font-bold`}
             onTouchStart={handleTouchStart("pickup")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
           >
             PICK
           </button>
           <button
             id="touch-right"
-            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            className={`w-16 h-16 flex items-center justify-center ${
+              activeAction === "right" ? "bg-blue-600" : "bg-gray-800"
+            } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("right")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
@@ -517,7 +544,9 @@ export default function TrashTruckGame() {
         <div className="flex flex-row justify-center gap-2 mt-2">
           <button
             id="touch-down"
-            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            className={`w-16 h-16 flex items-center justify-center ${
+              activeAction === "down" ? "bg-blue-600" : "bg-gray-800"
+            } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("down")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
