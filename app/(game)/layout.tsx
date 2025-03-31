@@ -20,7 +20,9 @@ export default function GameLayout({
         className="absolute top-4 left-4 text-md"
         asChild
       >
-        <Link href="/">home</Link>
+        <Link href="/" className="select-none">
+          home
+        </Link>
       </Button>
       <main className="min-h-screen w-full flex items-center justify-center">
         {children}
