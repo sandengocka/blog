@@ -441,55 +441,75 @@ export default function TrashTruckGame() {
   const TouchControls = () => {
     if (!isMobile) return null;
 
-    const [touchInterval, setTouchInterval] = useState<NodeJS.Timeout | null>(
-      null
-    );
-    const [activeAction, setActiveAction] = useState<string | null>(null);
+    // Use refs for tracking touch state instead of state variables
+    const touchActiveRef = useRef(false);
+    const currentActionRef = useRef<string | null>(null);
+    const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+    const [activeButton, setActiveButton] = useState<string | null>(null);
 
-    const handleTouchStart =
+    // Clean up any existing interval
+    const clearMovementInterval = useCallback(() => {
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
+      touchActiveRef.current = false;
+      currentActionRef.current = null;
+    }, []);
+
+    // Handle touch start on a control button
+    const handleTouchStart = useCallback(
       (action: "up" | "down" | "left" | "right" | "pickup") =>
+        (e: React.TouchEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Set active state
+          touchActiveRef.current = true;
+          currentActionRef.current = action;
+          setActiveButton(action);
+
+          // Call the action immediately
+          handleTouchControl(action);
+
+          // Don't set interval for pickup action
+          if (action === "pickup") return;
+
+          // Clear existing interval first
+          clearMovementInterval();
+
+          // Create new interval for continuous movement
+          intervalIdRef.current = setInterval(() => {
+            if (touchActiveRef.current && currentActionRef.current === action) {
+              handleTouchControl(action);
+            } else {
+              clearMovementInterval();
+            }
+          }, 50);
+        },
+      [clearMovementInterval]
+    );
+
+    // Handle touch end
+    const handleTouchEnd = useCallback(
       (e: React.TouchEvent) => {
         e.preventDefault();
+        e.stopPropagation();
 
-        // Set the active action
-        setActiveAction(action);
+        setActiveButton(null);
+        clearMovementInterval();
+      },
+      [clearMovementInterval]
+    );
 
-        // Call the action immediately
-        handleTouchControl(action);
-
-        // If it's the pickup action, don't set an interval
-        if (action === "pickup") return;
-
-        // Clear any existing interval
-        if (touchInterval) {
-          clearInterval(touchInterval);
-        }
-
-        // Set up interval for continuous movement
-        const interval = setInterval(() => {
-          handleTouchControl(action);
-        }, 50);
-
-        setTouchInterval(interval);
-      };
-
-    const handleTouchEnd = () => {
-      setActiveAction(null);
-
-      if (touchInterval) {
-        clearInterval(touchInterval);
-        setTouchInterval(null);
-      }
-    };
-
-    // Cleanup interval on unmount
+    // Ensure cleanup on unmount
     useEffect(() => {
       return () => {
-        if (touchInterval) {
-          clearInterval(touchInterval);
+        if (intervalIdRef.current) {
+          clearInterval(intervalIdRef.current);
         }
       };
-    }, [touchInterval]);
+    }, []);
 
     return (
       <div className="mt-4 select-none">
@@ -497,11 +517,12 @@ export default function TrashTruckGame() {
           <button
             id="touch-up"
             className={`w-16 h-16 flex items-center justify-center ${
-              activeAction === "up" ? "bg-blue-600" : "bg-gray-800"
+              activeButton === "up" ? "bg-blue-600" : "bg-gray-800"
             } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("up")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
+            onTouchMove={(e) => e.preventDefault()}
           >
             ↑
           </button>
@@ -510,33 +531,36 @@ export default function TrashTruckGame() {
           <button
             id="touch-left"
             className={`w-16 h-16 flex items-center justify-center ${
-              activeAction === "left" ? "bg-blue-600" : "bg-gray-800"
+              activeButton === "left" ? "bg-blue-600" : "bg-gray-800"
             } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("left")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
+            onTouchMove={(e) => e.preventDefault()}
           >
             ←
           </button>
           <button
             id="touch-pickup"
             className={`w-16 h-16 flex items-center justify-center ${
-              activeAction === "pickup" ? "bg-green-700" : "bg-green-500"
+              activeButton === "pickup" ? "bg-green-700" : "bg-green-500"
             } bg-opacity-50 rounded-full text-white text-xl font-bold`}
             onTouchStart={handleTouchStart("pickup")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
+            onTouchMove={(e) => e.preventDefault()}
           >
             PICK
           </button>
           <button
             id="touch-right"
             className={`w-16 h-16 flex items-center justify-center ${
-              activeAction === "right" ? "bg-blue-600" : "bg-gray-800"
+              activeButton === "right" ? "bg-blue-600" : "bg-gray-800"
             } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("right")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
+            onTouchMove={(e) => e.preventDefault()}
           >
             →
           </button>
@@ -545,11 +569,12 @@ export default function TrashTruckGame() {
           <button
             id="touch-down"
             className={`w-16 h-16 flex items-center justify-center ${
-              activeAction === "down" ? "bg-blue-600" : "bg-gray-800"
+              activeButton === "down" ? "bg-blue-600" : "bg-gray-800"
             } bg-opacity-50 rounded-full text-white text-2xl`}
             onTouchStart={handleTouchStart("down")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
+            onTouchMove={(e) => e.preventDefault()}
           >
             ↓
           </button>
