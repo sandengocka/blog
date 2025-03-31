@@ -45,7 +45,7 @@ export default function TrashTruckGame() {
   const [showContinueButton, setShowContinueButton] = useState(false);
   const lastMoveTime = useRef(Date.now());
   const [isMobile, setIsMobile] = useState(false);
-  const [mobileSpeedMultiplier, setMobileSpeedMultiplier] = useState(1);
+  const mobileSpeedMultiplier = 2;
 
   const isCollidingWithBarriers = useCallback(
     (
@@ -438,9 +438,6 @@ export default function TrashTruckGame() {
       if (action === "pickup") {
         pickupTrash();
       } else {
-        // Increase speed multiplier with each button press (up to a maximum of 3)
-        setMobileSpeedMultiplier((prev) => Math.min(prev + 0.2, 3));
-
         const directionMap = {
           up: "ArrowUp",
           down: "ArrowDown",
@@ -474,9 +471,6 @@ export default function TrashTruckGame() {
       }
       currentActionRef.current = null;
       setActiveButton(null);
-
-      // Reset speed multiplier when touch ends
-      setMobileSpeedMultiplier(1);
     }, []);
 
     // Function to start the movement loop
