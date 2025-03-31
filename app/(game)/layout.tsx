@@ -17,10 +17,12 @@ export default function GameLayout({
       <Button
         variant="link"
         size="sm"
-        className="absolute top-4 left-4 text-md select-none"
+        className="absolute top-4 left-4 text-md select-none pointer-events-auto"
         asChild
       >
-        <Link href="/">home</Link>
+        <Link href="/" className="select-none">
+          home
+        </Link>
       </Button>
       <main className="min-h-screen w-full flex items-center justify-center">
         {children}

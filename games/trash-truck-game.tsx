@@ -490,13 +490,22 @@ export default function TrashTruckGame() {
           // Check if we should continue
           if (currentActionRef.current === action) {
             handleTouchControl(action);
-            animationFrameIdRef.current = requestAnimationFrame(loop);
+            // Use setTimeout instead of requestAnimationFrame for more reliable performance on mobile
+            setTimeout(() => {
+              if (currentActionRef.current === action) {
+                handleTouchControl(action);
+                animationFrameIdRef.current = requestAnimationFrame(loop);
+              } else {
+                animationFrameIdRef.current = null;
+              }
+            }, 16); // Approx 60fps
           } else {
             animationFrameIdRef.current = null;
           }
         };
 
         // Start the loop
+        handleTouchControl(action); // Ensure immediate action
         animationFrameIdRef.current = requestAnimationFrame(loop);
       },
       [handleTouchControl]
@@ -557,7 +566,7 @@ export default function TrashTruckGame() {
     };
 
     return (
-      <div className="mt-4 select-none">
+      <div className="mt-4 select-none" style={{ touchAction: "none" }}>
         <div className="flex flex-row justify-center gap-2 mb-2">
           <button
             id="touch-up"
@@ -566,6 +575,7 @@ export default function TrashTruckGame() {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
             onTouchMove={(e) => e.preventDefault()}
+            style={{ touchAction: "none" }}
           >
             ↑
           </button>
@@ -578,6 +588,7 @@ export default function TrashTruckGame() {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
             onTouchMove={(e) => e.preventDefault()}
+            style={{ touchAction: "none" }}
           >
             ←
           </button>
@@ -588,6 +599,7 @@ export default function TrashTruckGame() {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
             onTouchMove={(e) => e.preventDefault()}
+            style={{ touchAction: "none" }}
           >
             PICK
           </button>
@@ -598,6 +610,7 @@ export default function TrashTruckGame() {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
             onTouchMove={(e) => e.preventDefault()}
+            style={{ touchAction: "none" }}
           >
             →
           </button>
@@ -610,6 +623,7 @@ export default function TrashTruckGame() {
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
             onTouchMove={(e) => e.preventDefault()}
+            style={{ touchAction: "none" }}
           >
             ↓
           </button>
