@@ -45,7 +45,7 @@ export default function TrashTruckGame() {
   const [showContinueButton, setShowContinueButton] = useState(false);
   const lastMoveTime = useRef(Date.now());
   const [isMobile, setIsMobile] = useState(false);
-  const mobileSpeedMultiplier = 2;
+  const mobileSpeedMultiplier = 3;
 
   const isCollidingWithBarriers = useCallback(
     (
@@ -549,23 +549,11 @@ export default function TrashTruckGame() {
     const getDirectionButtonClass = (
       action: "up" | "down" | "left" | "right"
     ) => {
-      const baseClass =
-        "w-16 h-16 flex items-center justify-center rounded-full text-white text-2xl select-none touch-manipulation";
-
-      if (activeButton === action) {
-        return `${baseClass} bg-blue-600 bg-opacity-20 border-2 border-white`;
-      }
-      return `${baseClass} bg-gray-800 bg-opacity-50`;
+      return "w-16 h-16 flex items-center justify-center rounded-full text-white text-2xl select-none touch-manipulation bg-gray-800 bg-opacity-50";
     };
 
     const getPickupButtonClass = () => {
-      const baseClass =
-        "w-16 h-16 flex items-center justify-center rounded-full text-white text-xl font-bold select-none touch-manipulation";
-
-      if (activeButton === "pickup") {
-        return `${baseClass} bg-green-700`;
-      }
-      return `${baseClass} bg-green-500 bg-opacity-50`;
+      return "w-16 h-16 flex items-center justify-center rounded-full text-white text-xl font-bold select-none touch-manipulation bg-green-500 bg-opacity-50";
     };
 
     return (
