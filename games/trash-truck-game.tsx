@@ -45,6 +45,7 @@ export default function TrashTruckGame() {
   const [showContinueButton, setShowContinueButton] = useState(false);
   const lastMoveTime = useRef(Date.now());
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileSpeedMultiplier, setMobileSpeedMultiplier] = useState(1);
 
   const isCollidingWithBarriers = useCallback(
     (
@@ -159,23 +160,28 @@ export default function TrashTruckGame() {
         let newX = prev.x;
         let newY = prev.y;
 
+        // Apply the appropriate speed based on device type
+        const effectiveSpeed = isMobile
+          ? TRUCK_SPEED * mobileSpeedMultiplier
+          : TRUCK_SPEED;
+
         switch (direction) {
           case "ArrowUp":
-            newY = Math.max(0, prev.y - TRUCK_SPEED);
+            newY = Math.max(0, prev.y - effectiveSpeed);
             break;
           case "ArrowDown":
             newY = Math.min(
               GAME_HEIGHT - TRUCK_SIZE.height,
-              prev.y + TRUCK_SPEED
+              prev.y + effectiveSpeed
             );
             break;
           case "ArrowLeft":
-            newX = Math.max(0, prev.x - TRUCK_SPEED);
+            newX = Math.max(0, prev.x - effectiveSpeed);
             break;
           case "ArrowRight":
             newX = Math.min(
               GAME_WIDTH - TRUCK_SIZE.width,
-              prev.x + TRUCK_SPEED
+              prev.x + effectiveSpeed
             );
             break;
         }
@@ -223,7 +229,14 @@ export default function TrashTruckGame() {
         return prev;
       });
     },
-    [gameStatus, gateState, currentLevel, isCollidingWithBarriers]
+    [
+      gameStatus,
+      gateState,
+      isCollidingWithBarriers,
+      currentLevel,
+      isMobile,
+      mobileSpeedMultiplier,
+    ]
   );
 
   const pickupTrash = useCallback(() => {
@@ -425,6 +438,9 @@ export default function TrashTruckGame() {
       if (action === "pickup") {
         pickupTrash();
       } else {
+        // Increase speed multiplier with each button press (up to a maximum of 3)
+        setMobileSpeedMultiplier((prev) => Math.min(prev + 0.2, 3));
+
         const directionMap = {
           up: "ArrowUp",
           down: "ArrowDown",
@@ -458,6 +474,9 @@ export default function TrashTruckGame() {
       }
       currentActionRef.current = null;
       setActiveButton(null);
+
+      // Reset speed multiplier when touch ends
+      setMobileSpeedMultiplier(1);
     }, []);
 
     // Function to start the movement loop
