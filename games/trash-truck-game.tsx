@@ -44,6 +44,7 @@ export default function TrashTruckGame() {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [showContinueButton, setShowContinueButton] = useState(false);
   const lastMoveTime = useRef(Date.now());
+  const [isMobile, setIsMobile] = useState(false);
 
   const isCollidingWithBarriers = useCallback(
     (
@@ -367,82 +368,348 @@ export default function TrashTruckGame() {
     return () => clearInterval(binMoveInterval);
   }, [gameStatus, moveBins]);
 
+  // Detect mobile device on component mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Mobile touch controls
+  const handleTouchControl = useCallback(
+    (action: "up" | "down" | "left" | "right" | "pickup") => {
+      if (action === "pickup") {
+        pickupTrash();
+      } else {
+        const directionMap = {
+          up: "ArrowUp",
+          down: "ArrowDown",
+          left: "ArrowLeft",
+          right: "ArrowRight",
+        };
+        moveTruck(directionMap[action]);
+      }
+    },
+    [pickupTrash, moveTruck]
+  );
+
+  useEffect(() => {
+    // For mobile, continuously apply the last touch input
+    if (!isMobile || gameStatus !== "playing") return;
+
+    let touchDirection = "";
+    let touchInterval: NodeJS.Timeout | null = null;
+
+    const startTouchControl = (direction: string) => {
+      touchDirection = direction;
+      if (touchInterval) clearInterval(touchInterval);
+
+      // Move immediately
+      moveTruck(direction);
+
+      // Then set up interval for continuous movement
+      touchInterval = setInterval(() => {
+        if (touchDirection) {
+          moveTruck(touchDirection);
+        }
+      }, 100);
+    };
+
+    const stopTouchControl = () => {
+      if (touchInterval) {
+        clearInterval(touchInterval);
+        touchInterval = null;
+      }
+      touchDirection = "";
+    };
+
+    // Add event listeners to touch control elements
+    const upButton = document.getElementById("touch-up");
+    const downButton = document.getElementById("touch-down");
+    const leftButton = document.getElementById("touch-left");
+    const rightButton = document.getElementById("touch-right");
+
+    const touchStartHandler = (direction: string) => () =>
+      startTouchControl(direction);
+    const touchEndHandler = () => stopTouchControl();
+
+    if (upButton) {
+      upButton.addEventListener("touchstart", touchStartHandler("ArrowUp"));
+      upButton.addEventListener("touchend", touchEndHandler);
+    }
+
+    if (downButton) {
+      downButton.addEventListener("touchstart", touchStartHandler("ArrowDown"));
+      downButton.addEventListener("touchend", touchEndHandler);
+    }
+
+    if (leftButton) {
+      leftButton.addEventListener("touchstart", touchStartHandler("ArrowLeft"));
+      leftButton.addEventListener("touchend", touchEndHandler);
+    }
+
+    if (rightButton) {
+      rightButton.addEventListener(
+        "touchstart",
+        touchStartHandler("ArrowRight")
+      );
+      rightButton.addEventListener("touchend", touchEndHandler);
+    }
+
+    return () => {
+      stopTouchControl();
+
+      if (upButton) {
+        upButton.removeEventListener(
+          "touchstart",
+          touchStartHandler("ArrowUp")
+        );
+        upButton.removeEventListener("touchend", touchEndHandler);
+      }
+
+      if (downButton) {
+        downButton.removeEventListener(
+          "touchstart",
+          touchStartHandler("ArrowDown")
+        );
+        downButton.removeEventListener("touchend", touchEndHandler);
+      }
+
+      if (leftButton) {
+        leftButton.removeEventListener(
+          "touchstart",
+          touchStartHandler("ArrowLeft")
+        );
+        leftButton.removeEventListener("touchend", touchEndHandler);
+      }
+
+      if (rightButton) {
+        rightButton.removeEventListener(
+          "touchstart",
+          touchStartHandler("ArrowRight")
+        );
+        rightButton.removeEventListener("touchend", touchEndHandler);
+      }
+    };
+  }, [isMobile, gameStatus, moveTruck]);
+
+  // Add the touch controls UI
+  const TouchControls = () => {
+    if (!isMobile) return null;
+
+    return (
+      <div className="mt-4 select-none">
+        <div className="flex flex-row justify-center gap-2 mb-2">
+          <button
+            id="touch-up"
+            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            onTouchStart={() => handleTouchControl("up")}
+          >
+            ↑
+          </button>
+        </div>
+        <div className="flex flex-row justify-center gap-2">
+          <button
+            id="touch-left"
+            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            onTouchStart={() => handleTouchControl("left")}
+          >
+            ←
+          </button>
+          <button
+            id="touch-pickup"
+            className="w-16 h-16 flex items-center justify-center bg-green-500 bg-opacity-50 rounded-full text-white text-xl font-bold"
+            onTouchStart={() => handleTouchControl("pickup")}
+          >
+            PICK
+          </button>
+          <button
+            id="touch-right"
+            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            onTouchStart={() => handleTouchControl("right")}
+          >
+            →
+          </button>
+        </div>
+        <div className="flex flex-row justify-center gap-2 mt-2">
+          <button
+            id="touch-down"
+            className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
+            onTouchStart={() => handleTouchControl("down")}
+          >
+            ↓
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex items-center justify-center  bg-black">
-      <div
-        className="p-8 bg-gray-900 rounded-lg shadow-lg"
-        style={{ boxShadow: "0 0 20px #ff00ff, 0 0 40px #00ffff" }}
-      >
-        <h1
-          className="mb-4 text-4xl font-bold text-center"
-          style={{ color: "#ff00ff", textShadow: "2px 2px #00ffff" }}
+    <div
+      className={`${
+        isMobile
+          ? "flex flex-col items-center justify-center p-2 mx-auto"
+          : "flex items-center justify-center"
+      }`}
+    >
+      {!isMobile && (
+        <div
+          className="p-8 bg-gray-900 rounded-lg shadow-lg"
+          style={{ boxShadow: "0 0 20px #ff00ff, 0 0 40px #00ffff" }}
         >
-          Sideloader Trash Truck Game
-        </h1>
-        {gameStatus === "notStarted" ? (
-          <div className="text-center">
-            <button
-              className="px-6 py-3 text-2xl font-bold text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors duration-200"
-              onClick={startGame}
-              style={{ textShadow: "1px 1px #000" }}
-            >
-              Start Game
-            </button>
-          </div>
-        ) : (
-          <>
-            <GameView
-              truckPosition={truckPosition}
-              trashBins={trashBins}
-              score={score}
-              gameWidth={GAME_WIDTH}
-              gameHeight={GAME_HEIGHT}
-              isPickingUp={isPickingUp}
-              timeLeft={timeLeft}
-              isMoving={isMoving}
-              barriers={levels[currentLevel - 1].hasBarriers ? barriers : []}
-              gate={gateState}
-              currentLevel={currentLevel}
-            />
-            <div className="mt-4 text-center text-white">
-              <p>Use arrow keys to move the truck and 'p' to pick up trash</p>
-              <p className="text-xl font-bold">Level: {currentLevel}</p>
-              {gameStatus === "won" && (
-                <p className="text-2xl font-bold text-green-500">
-                  Congratulations! You completed all levels!
-                </p>
-              )}
-              {gameStatus === "lost" && (
-                <p className="text-2xl font-bold text-red-500">
-                  Time's up! Try again.
-                </p>
-              )}
-              {gameStatus === "levelComplete" && (
-                <div>
+          <h1
+            className="mb-4 text-4xl font-bold text-center"
+            style={{ color: "#ff00ff", textShadow: "2px 2px #00ffff" }}
+          >
+            Sideloader Trash Truck Game
+          </h1>
+          {gameStatus === "notStarted" ? (
+            <div className="text-center">
+              <button
+                className="px-6 py-3 text-2xl font-bold text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors duration-200"
+                onClick={startGame}
+                style={{ textShadow: "1px 1px #000" }}
+              >
+                Start Game
+              </button>
+            </div>
+          ) : (
+            <>
+              <GameView
+                truckPosition={truckPosition}
+                trashBins={trashBins}
+                score={score}
+                gameWidth={GAME_WIDTH}
+                gameHeight={GAME_HEIGHT}
+                isPickingUp={isPickingUp}
+                timeLeft={timeLeft}
+                isMoving={isMoving}
+                barriers={levels[currentLevel - 1].hasBarriers ? barriers : []}
+                gate={gateState}
+                currentLevel={currentLevel}
+              />
+              <div className="mt-4 text-center text-white">
+                <p>Use arrow keys to move the truck and 'p' to pick up trash</p>
+                <p className="text-xl font-bold">Level: {currentLevel}</p>
+                {gameStatus === "won" && (
                   <p className="text-2xl font-bold text-green-500">
-                    Level {currentLevel - 1} Complete!
+                    Congratulations! You completed all levels!
                   </p>
+                )}
+                {gameStatus === "lost" && (
+                  <p className="text-2xl font-bold text-red-500">
+                    Time's up! Try again.
+                  </p>
+                )}
+                {gameStatus === "levelComplete" && (
+                  <div>
+                    <p className="text-2xl font-bold text-green-500">
+                      Level {currentLevel - 1} Complete!
+                    </p>
+                    <button
+                      className="mt-4 px-6 py-3 text-2xl font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                      onClick={continueToNextLevel}
+                      style={{ textShadow: "1px 1px #000" }}
+                    >
+                      Continue to Level {currentLevel}
+                    </button>
+                  </div>
+                )}
+                {(gameStatus === "won" || gameStatus === "lost") && (
+                  <button
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={startGame}
+                  >
+                    {gameStatus === "won" ? "Play Again" : "Restart Game"}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {isMobile && (
+        <>
+          {gameStatus === "notStarted" ? (
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4 text-white">
+                Trash Truck Game
+              </h1>
+              <p className="mb-6 text-white">
+                Drive the truck to pick up all the trash bins. Use the touch
+                controls to move and pick up trash.
+              </p>
+              <button
+                className="px-6 py-3 text-2xl font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                onClick={startGame}
+                style={{ textShadow: "1px 1px #000" }}
+              >
+                Start Game
+              </button>
+            </div>
+          ) : (
+            <>
+              <GameView
+                truckPosition={truckPosition}
+                trashBins={trashBins}
+                score={score}
+                gameWidth={GAME_WIDTH}
+                gameHeight={GAME_HEIGHT}
+                isPickingUp={isPickingUp}
+                timeLeft={timeLeft}
+                isMoving={isMoving}
+                barriers={levels[currentLevel - 1].hasBarriers ? barriers : []}
+                gate={gateState}
+                currentLevel={currentLevel}
+              />
+              <div className="mt-4 text-center text-white">
+                <p className="text-xl font-bold">Level: {currentLevel}</p>
+                {gameStatus === "won" && (
+                  <p className="text-2xl font-bold text-green-500">
+                    Congratulations! You completed all levels!
+                  </p>
+                )}
+                {gameStatus === "lost" && (
+                  <p className="text-2xl font-bold text-red-500">
+                    Time's up! Try again.
+                  </p>
+                )}
+                {gameStatus === "levelComplete" && (
+                  <div>
+                    <p className="text-2xl font-bold text-green-500">
+                      Level {currentLevel - 1} Complete!
+                    </p>
+                    <button
+                      className="mt-4 px-6 py-3 text-2xl font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                      onClick={continueToNextLevel}
+                      style={{ textShadow: "1px 1px #000" }}
+                    >
+                      Continue to Level {currentLevel}
+                    </button>
+                  </div>
+                )}
+                {(gameStatus === "won" || gameStatus === "lost") && (
                   <button
                     className="mt-4 px-6 py-3 text-2xl font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                    onClick={continueToNextLevel}
+                    onClick={startGame}
                     style={{ textShadow: "1px 1px #000" }}
                   >
-                    Continue to Level {currentLevel}
+                    Play Again
                   </button>
-                </div>
-              )}
-              {(gameStatus === "won" || gameStatus === "lost") && (
-                <button
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  onClick={startGame}
-                >
-                  {gameStatus === "won" ? "Play Again" : "Restart Game"}
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+                )}
+              </div>
+
+              <TouchControls />
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
