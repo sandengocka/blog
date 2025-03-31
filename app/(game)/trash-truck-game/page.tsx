@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TrashTruckGamePage() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-black">
+    <div className="min-h-screen w-full flex items-center justify-center bg-black select-none">
       <TrashTruckGame />
     </div>
   );

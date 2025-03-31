@@ -260,19 +260,58 @@ export default function TrashTruckGame() {
   }, [truckPosition, gameStatus]);
 
   useEffect(() => {
+    // Track which keys are currently pressed
+    const keysPressed = new Set<string>();
+    let moveInterval: NodeJS.Timeout | null = null;
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)
-      ) {
-        moveTruck(event.key);
+      const key = event.key;
+
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+        // Only add the key if it's not already in the set
+        if (!keysPressed.has(key)) {
+          keysPressed.add(key);
+
+          // If this is the first arrow key pressed, start the interval
+          if (keysPressed.size === 1) {
+            // Move immediately on first press
+            moveTruck(key);
+
+            // Set up interval for continuous movement
+            moveInterval = setInterval(() => {
+              // Process all currently pressed keys
+              keysPressed.forEach((direction) => {
+                moveTruck(direction);
+              });
+            }, 50); // Move every 50ms for smooth movement
+          }
+        }
       } else if (event.key === "p") {
         pickupTrash();
       }
     };
 
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const key = event.key;
+
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+        keysPressed.delete(key);
+
+        // If no arrow keys are pressed anymore, clear the interval
+        if (keysPressed.size === 0 && moveInterval) {
+          clearInterval(moveInterval);
+          moveInterval = null;
+        }
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      if (moveInterval) clearInterval(moveInterval);
     };
   }, [moveTruck, pickupTrash]);
 
@@ -417,7 +456,7 @@ export default function TrashTruckGame() {
         if (touchDirection) {
           moveTruck(touchDirection);
         }
-      }, 100);
+      }, 50); // Reduced from 100ms to 50ms for smoother movement
     };
 
     const stopTouchControl = () => {
@@ -433,67 +472,99 @@ export default function TrashTruckGame() {
     const downButton = document.getElementById("touch-down");
     const leftButton = document.getElementById("touch-left");
     const rightButton = document.getElementById("touch-right");
+    const pickupButton = document.getElementById("touch-pickup");
 
-    const touchStartHandler = (direction: string) => () =>
+    // Enhanced touch control handlers with better touch event support
+    const createTouchStartHandler = (direction: string) => (e: TouchEvent) => {
+      e.preventDefault(); // Prevent default to avoid scrolling or selection
       startTouchControl(direction);
-    const touchEndHandler = () => stopTouchControl();
+    };
+
+    const createTouchEndHandler = () => (e: TouchEvent) => {
+      e.preventDefault();
+      stopTouchControl();
+    };
+
+    // Define the handlers for each button
+    const upTouchStartHandler = createTouchStartHandler("ArrowUp");
+    const downTouchStartHandler = createTouchStartHandler("ArrowDown");
+    const leftTouchStartHandler = createTouchStartHandler("ArrowLeft");
+    const rightTouchStartHandler = createTouchStartHandler("ArrowRight");
+    const touchEndHandler = createTouchEndHandler();
 
     if (upButton) {
-      upButton.addEventListener("touchstart", touchStartHandler("ArrowUp"));
-      upButton.addEventListener("touchend", touchEndHandler);
+      upButton.addEventListener("touchstart", upTouchStartHandler, {
+        passive: false,
+      });
+      upButton.addEventListener("touchend", touchEndHandler, {
+        passive: false,
+      });
+      upButton.addEventListener("touchcancel", touchEndHandler, {
+        passive: false,
+      });
     }
 
     if (downButton) {
-      downButton.addEventListener("touchstart", touchStartHandler("ArrowDown"));
-      downButton.addEventListener("touchend", touchEndHandler);
+      downButton.addEventListener("touchstart", downTouchStartHandler, {
+        passive: false,
+      });
+      downButton.addEventListener("touchend", touchEndHandler, {
+        passive: false,
+      });
+      downButton.addEventListener("touchcancel", touchEndHandler, {
+        passive: false,
+      });
     }
 
     if (leftButton) {
-      leftButton.addEventListener("touchstart", touchStartHandler("ArrowLeft"));
-      leftButton.addEventListener("touchend", touchEndHandler);
+      leftButton.addEventListener("touchstart", leftTouchStartHandler, {
+        passive: false,
+      });
+      leftButton.addEventListener("touchend", touchEndHandler, {
+        passive: false,
+      });
+      leftButton.addEventListener("touchcancel", touchEndHandler, {
+        passive: false,
+      });
     }
 
     if (rightButton) {
-      rightButton.addEventListener(
-        "touchstart",
-        touchStartHandler("ArrowRight")
-      );
-      rightButton.addEventListener("touchend", touchEndHandler);
+      rightButton.addEventListener("touchstart", rightTouchStartHandler, {
+        passive: false,
+      });
+      rightButton.addEventListener("touchend", touchEndHandler, {
+        passive: false,
+      });
+      rightButton.addEventListener("touchcancel", touchEndHandler, {
+        passive: false,
+      });
     }
 
     return () => {
       stopTouchControl();
 
       if (upButton) {
-        upButton.removeEventListener(
-          "touchstart",
-          touchStartHandler("ArrowUp")
-        );
+        upButton.removeEventListener("touchstart", upTouchStartHandler);
         upButton.removeEventListener("touchend", touchEndHandler);
+        upButton.removeEventListener("touchcancel", touchEndHandler);
       }
 
       if (downButton) {
-        downButton.removeEventListener(
-          "touchstart",
-          touchStartHandler("ArrowDown")
-        );
+        downButton.removeEventListener("touchstart", downTouchStartHandler);
         downButton.removeEventListener("touchend", touchEndHandler);
+        downButton.removeEventListener("touchcancel", touchEndHandler);
       }
 
       if (leftButton) {
-        leftButton.removeEventListener(
-          "touchstart",
-          touchStartHandler("ArrowLeft")
-        );
+        leftButton.removeEventListener("touchstart", leftTouchStartHandler);
         leftButton.removeEventListener("touchend", touchEndHandler);
+        leftButton.removeEventListener("touchcancel", touchEndHandler);
       }
 
       if (rightButton) {
-        rightButton.removeEventListener(
-          "touchstart",
-          touchStartHandler("ArrowRight")
-        );
+        rightButton.removeEventListener("touchstart", rightTouchStartHandler);
         rightButton.removeEventListener("touchend", touchEndHandler);
+        rightButton.removeEventListener("touchcancel", touchEndHandler);
       }
     };
   }, [isMobile, gameStatus, moveTruck]);
@@ -502,13 +573,20 @@ export default function TrashTruckGame() {
   const TouchControls = () => {
     if (!isMobile) return null;
 
+    const handleTouchStart =
+      (action: "up" | "down" | "left" | "right" | "pickup") =>
+      (e: React.TouchEvent) => {
+        e.preventDefault(); // Prevent default to stop selection
+        handleTouchControl(action);
+      };
+
     return (
       <div className="mt-4 select-none">
         <div className="flex flex-row justify-center gap-2 mb-2">
           <button
             id="touch-up"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
-            onTouchStart={() => handleTouchControl("up")}
+            onTouchStart={handleTouchStart("up")}
           >
             ↑
           </button>
@@ -517,21 +595,21 @@ export default function TrashTruckGame() {
           <button
             id="touch-left"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
-            onTouchStart={() => handleTouchControl("left")}
+            onTouchStart={handleTouchStart("left")}
           >
             ←
           </button>
           <button
             id="touch-pickup"
             className="w-16 h-16 flex items-center justify-center bg-green-500 bg-opacity-50 rounded-full text-white text-xl font-bold"
-            onTouchStart={() => handleTouchControl("pickup")}
+            onTouchStart={handleTouchStart("pickup")}
           >
             PICK
           </button>
           <button
             id="touch-right"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
-            onTouchStart={() => handleTouchControl("right")}
+            onTouchStart={handleTouchStart("right")}
           >
             →
           </button>
@@ -540,7 +618,7 @@ export default function TrashTruckGame() {
           <button
             id="touch-down"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
-            onTouchStart={() => handleTouchControl("down")}
+            onTouchStart={handleTouchStart("down")}
           >
             ↓
           </button>
@@ -548,6 +626,22 @@ export default function TrashTruckGame() {
       </div>
     );
   };
+
+  // Add a timer warning effect
+  useEffect(() => {
+    if (gameStatus !== "playing" || timeLeft > 10) return;
+
+    // Create a flashing warning effect for the last 10 seconds
+    const warningInterval = setInterval(() => {
+      const timerElement = document.querySelector(".timer-warning");
+      if (timerElement) {
+        timerElement.classList.toggle("text-red-500");
+        timerElement.classList.toggle("text-yellow-300");
+      }
+    }, 500);
+
+    return () => clearInterval(warningInterval);
+  }, [gameStatus, timeLeft]);
 
   return (
     <div
@@ -559,7 +653,7 @@ export default function TrashTruckGame() {
     >
       {!isMobile && (
         <div
-          className="p-8 bg-gray-900 rounded-lg shadow-lg"
+          className="p-8 bg-gray-900 rounded-lg shadow-lg select-none"
           style={{ boxShadow: "0 0 20px #ff00ff, 0 0 40px #00ffff" }}
         >
           <h1
@@ -570,6 +664,13 @@ export default function TrashTruckGame() {
           </h1>
           {gameStatus === "notStarted" ? (
             <div className="text-center">
+              <p className="mb-6 text-white">
+                Drive the truck to pick up all the trash bins.
+                <br />
+                <br />
+                Use arrow keys to move and 'p' to pick up trash before the timer
+                runs out!
+              </p>
               <button
                 className="px-6 py-3 text-2xl font-bold text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors duration-200"
                 onClick={startGame}
@@ -593,9 +694,18 @@ export default function TrashTruckGame() {
                 gate={gateState}
                 currentLevel={currentLevel}
               />
-              <div className="mt-4 text-center text-white">
+              <div className="mt-4 text-center text-white select-none">
                 <p>Use arrow keys to move the truck and 'p' to pick up trash</p>
                 <p className="text-xl font-bold">Level: {currentLevel}</p>
+                <p
+                  className={`text-xl font-bold ${
+                    timeLeft <= 10 ? "timer-warning text-red-500" : ""
+                  }`}
+                >
+                  Time: {Math.floor(timeLeft / 60)}:
+                  {(timeLeft % 60).toString().padStart(2, "0")}
+                  {timeLeft <= 10 && " Hurry!"}
+                </p>
                 {gameStatus === "won" && (
                   <p className="text-2xl font-bold text-green-500">
                     Congratulations! You completed all levels!
@@ -637,16 +747,25 @@ export default function TrashTruckGame() {
       {isMobile && (
         <>
           {gameStatus === "notStarted" ? (
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4 text-white">
-                Trash Truck Game
+            <div
+              className="text-center select-none p-8 bg-gray-900 rounded-lg shadow-lg"
+              style={{ boxShadow: "0 0 20px #ff00ff, 0 0 40px #00ffff" }}
+            >
+              <h1
+                className="mb-4 text-3xl font-bold text-center"
+                style={{ color: "#ff00ff", textShadow: "2px 2px #00ffff" }}
+              >
+                Sideloader Trash Truck Game
               </h1>
               <p className="mb-6 text-white">
-                Drive the truck to pick up all the trash bins. Use the touch
-                controls to move and pick up trash.
+                Drive the truck to pick up all the trash bins.
+                <br />
+                <br />
+                Use the touch controls to move and pick up trash before the
+                timer runs out!
               </p>
               <button
-                className="px-6 py-3 text-2xl font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                className="px-6 py-3 text-2xl font-bold text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors duration-200"
                 onClick={startGame}
                 style={{ textShadow: "1px 1px #000" }}
               >
@@ -668,8 +787,17 @@ export default function TrashTruckGame() {
                 gate={gateState}
                 currentLevel={currentLevel}
               />
-              <div className="mt-4 text-center text-white">
+              <div className="mt-4 text-center text-white select-none">
                 <p className="text-xl font-bold">Level: {currentLevel}</p>
+                <p
+                  className={`text-xl font-bold ${
+                    timeLeft <= 10 ? "timer-warning text-red-500" : ""
+                  }`}
+                >
+                  Time: {Math.floor(timeLeft / 60)}:
+                  {(timeLeft % 60).toString().padStart(2, "0")}
+                  {timeLeft <= 10 && " Hurry!"}
+                </p>
                 {gameStatus === "won" && (
                   <p className="text-2xl font-bold text-green-500">
                     Congratulations! You completed all levels!
