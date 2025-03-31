@@ -437,148 +437,42 @@ export default function TrashTruckGame() {
     [pickupTrash, moveTruck]
   );
 
-  useEffect(() => {
-    // For mobile, continuously apply the last touch input
-    if (!isMobile || gameStatus !== "playing") return;
-
-    let touchDirection = "";
-    let touchInterval: NodeJS.Timeout | null = null;
-
-    const startTouchControl = (direction: string) => {
-      touchDirection = direction;
-      if (touchInterval) clearInterval(touchInterval);
-
-      // Move immediately
-      moveTruck(direction);
-
-      // Then set up interval for continuous movement
-      touchInterval = setInterval(() => {
-        if (touchDirection) {
-          moveTruck(touchDirection);
-        }
-      }, 50); // Reduced from 100ms to 50ms for smoother movement
-    };
-
-    const stopTouchControl = () => {
-      if (touchInterval) {
-        clearInterval(touchInterval);
-        touchInterval = null;
-      }
-      touchDirection = "";
-    };
-
-    // Add event listeners to touch control elements
-    const upButton = document.getElementById("touch-up");
-    const downButton = document.getElementById("touch-down");
-    const leftButton = document.getElementById("touch-left");
-    const rightButton = document.getElementById("touch-right");
-    const pickupButton = document.getElementById("touch-pickup");
-
-    // Enhanced touch control handlers with better touch event support
-    const createTouchStartHandler = (direction: string) => (e: TouchEvent) => {
-      e.preventDefault(); // Prevent default to avoid scrolling or selection
-      startTouchControl(direction);
-    };
-
-    const createTouchEndHandler = () => (e: TouchEvent) => {
-      e.preventDefault();
-      stopTouchControl();
-    };
-
-    // Define the handlers for each button
-    const upTouchStartHandler = createTouchStartHandler("ArrowUp");
-    const downTouchStartHandler = createTouchStartHandler("ArrowDown");
-    const leftTouchStartHandler = createTouchStartHandler("ArrowLeft");
-    const rightTouchStartHandler = createTouchStartHandler("ArrowRight");
-    const touchEndHandler = createTouchEndHandler();
-
-    if (upButton) {
-      upButton.addEventListener("touchstart", upTouchStartHandler, {
-        passive: false,
-      });
-      upButton.addEventListener("touchend", touchEndHandler, {
-        passive: false,
-      });
-      upButton.addEventListener("touchcancel", touchEndHandler, {
-        passive: false,
-      });
-    }
-
-    if (downButton) {
-      downButton.addEventListener("touchstart", downTouchStartHandler, {
-        passive: false,
-      });
-      downButton.addEventListener("touchend", touchEndHandler, {
-        passive: false,
-      });
-      downButton.addEventListener("touchcancel", touchEndHandler, {
-        passive: false,
-      });
-    }
-
-    if (leftButton) {
-      leftButton.addEventListener("touchstart", leftTouchStartHandler, {
-        passive: false,
-      });
-      leftButton.addEventListener("touchend", touchEndHandler, {
-        passive: false,
-      });
-      leftButton.addEventListener("touchcancel", touchEndHandler, {
-        passive: false,
-      });
-    }
-
-    if (rightButton) {
-      rightButton.addEventListener("touchstart", rightTouchStartHandler, {
-        passive: false,
-      });
-      rightButton.addEventListener("touchend", touchEndHandler, {
-        passive: false,
-      });
-      rightButton.addEventListener("touchcancel", touchEndHandler, {
-        passive: false,
-      });
-    }
-
-    return () => {
-      stopTouchControl();
-
-      if (upButton) {
-        upButton.removeEventListener("touchstart", upTouchStartHandler);
-        upButton.removeEventListener("touchend", touchEndHandler);
-        upButton.removeEventListener("touchcancel", touchEndHandler);
-      }
-
-      if (downButton) {
-        downButton.removeEventListener("touchstart", downTouchStartHandler);
-        downButton.removeEventListener("touchend", touchEndHandler);
-        downButton.removeEventListener("touchcancel", touchEndHandler);
-      }
-
-      if (leftButton) {
-        leftButton.removeEventListener("touchstart", leftTouchStartHandler);
-        leftButton.removeEventListener("touchend", touchEndHandler);
-        leftButton.removeEventListener("touchcancel", touchEndHandler);
-      }
-
-      if (rightButton) {
-        rightButton.removeEventListener("touchstart", rightTouchStartHandler);
-        rightButton.removeEventListener("touchend", touchEndHandler);
-        rightButton.removeEventListener("touchcancel", touchEndHandler);
-      }
-    };
-  }, [isMobile, gameStatus, moveTruck]);
-
-  // Add the touch controls UI
+  // Touch controls component with press-and-hold functionality
   const TouchControls = () => {
     if (!isMobile) return null;
+
+    const [touchInterval, setTouchInterval] = useState<NodeJS.Timeout | null>(
+      null
+    );
 
     const handleTouchStart =
       (action: "up" | "down" | "left" | "right" | "pickup") =>
       (e: React.TouchEvent) => {
-        e.preventDefault(); // Prevent default to stop selection
+        e.preventDefault();
+
+        // Call the action immediately
         handleTouchControl(action);
+
+        // If it's the pickup action, don't set an interval
+        if (action === "pickup") return;
+
+        // Clear any existing interval
+        if (touchInterval) clearInterval(touchInterval);
+
+        // Set up interval for continuous movement
+        const interval = setInterval(() => {
+          handleTouchControl(action);
+        }, 50);
+
+        setTouchInterval(interval);
       };
+
+    const handleTouchEnd = () => {
+      if (touchInterval) {
+        clearInterval(touchInterval);
+        setTouchInterval(null);
+      }
+    };
 
     return (
       <div className="mt-4 select-none">
@@ -587,6 +481,8 @@ export default function TrashTruckGame() {
             id="touch-up"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
             onTouchStart={handleTouchStart("up")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
           >
             ↑
           </button>
@@ -596,6 +492,8 @@ export default function TrashTruckGame() {
             id="touch-left"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
             onTouchStart={handleTouchStart("left")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
           >
             ←
           </button>
@@ -610,6 +508,8 @@ export default function TrashTruckGame() {
             id="touch-right"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
             onTouchStart={handleTouchStart("right")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
           >
             →
           </button>
@@ -619,6 +519,8 @@ export default function TrashTruckGame() {
             id="touch-down"
             className="w-16 h-16 flex items-center justify-center bg-gray-800 bg-opacity-50 rounded-full text-white text-2xl"
             onTouchStart={handleTouchStart("down")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
           >
             ↓
           </button>
@@ -627,7 +529,6 @@ export default function TrashTruckGame() {
     );
   };
 
-  // Add a timer warning effect
   useEffect(() => {
     if (gameStatus !== "playing" || timeLeft > 10) return;
 

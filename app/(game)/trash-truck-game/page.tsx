@@ -1,11 +1,16 @@
 import TrashTruckGame from "../../../games/trash-truck-game";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "Trash Truck Game",
   description: "Play the Trash Truck Game - collect all trash bins to win!",
-  viewport:
-    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function TrashTruckGamePage() {
