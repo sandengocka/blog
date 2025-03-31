@@ -479,15 +479,18 @@ export default function TrashTruckGame() {
           clearMovementInterval();
 
           // Create new interval for continuous movement
-          intervalIdRef.current = setInterval(() => {
+          const newInterval = setInterval(() => {
             if (touchActiveRef.current && currentActionRef.current === action) {
               handleTouchControl(action);
             } else {
-              clearMovementInterval();
+              clearInterval(newInterval);
+              intervalIdRef.current = null;
             }
           }, 50);
+
+          intervalIdRef.current = newInterval;
         },
-      [clearMovementInterval]
+      [clearMovementInterval, handleTouchControl]
     );
 
     // Handle touch end
@@ -507,12 +510,36 @@ export default function TrashTruckGame() {
       return () => {
         if (intervalIdRef.current) {
           clearInterval(intervalIdRef.current);
+          intervalIdRef.current = null;
         }
       };
     }, []);
 
+    // Add a debug indicator to help troubleshoot
+    const [debugInfo, setDebugInfo] = useState("");
+
+    // Update debug info periodically
+    useEffect(() => {
+      const debugInterval = setInterval(() => {
+        setDebugInfo(
+          touchActiveRef.current
+            ? `Active: ${currentActionRef.current}, Interval: ${
+                intervalIdRef.current ? "Set" : "None"
+              }`
+            : "Inactive"
+        );
+      }, 500);
+
+      return () => clearInterval(debugInterval);
+    }, []);
+
     return (
       <div className="mt-4 select-none">
+        {/* Small debug indicator */}
+        <div className="text-xs text-white opacity-70 mb-1 h-4">
+          {debugInfo}
+        </div>
+
         <div className="flex flex-row justify-center gap-2 mb-2">
           <button
             id="touch-up"
