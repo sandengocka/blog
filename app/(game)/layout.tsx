@@ -17,7 +17,7 @@ export default function GameLayout({
       <Button
         variant="link"
         size="sm"
-        className="absolute top-4 left-4 text-md select-none pointer-events-auto"
+        className="absolute top-4 left-4 text-md"
         asChild
       >
         <Link href="/" className="select-none">
