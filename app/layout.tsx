@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { baseUrl } from "./sitemap";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -48,10 +49,10 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
+          forcedTheme="dark"
           disableTransitionOnChange
         >
-          {children}
+          <PostHogProvider>{children}</PostHogProvider>
         </ThemeProvider>
       </body>
     </html>
