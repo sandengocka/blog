@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { GameView } from "@/games/components/game-view";
+import { usePostHog } from "posthog-js/react";
 import {
   barriers,
   gate as initialGate,
@@ -46,6 +47,7 @@ export default function TrashTruckGame() {
   const lastMoveTime = useRef(Date.now());
   const [isMobile, setIsMobile] = useState(false);
   const mobileSpeedMultiplier = 3;
+  const posthog = usePostHog();
 
   const isCollidingWithBarriers = useCallback(
     (
@@ -130,21 +132,34 @@ export default function TrashTruckGame() {
   const startGame = useCallback(() => {
     setCurrentLevel(1);
     initializeLevel(1);
-  }, [initializeLevel]);
+    posthog.capture("game_started", { game: "trash_truck" });
+  }, [initializeLevel, posthog]);
 
   const nextLevel = useCallback(() => {
     if (currentLevel < levels.length) {
       setCurrentLevel(currentLevel + 1);
       setShowContinueButton(true);
       setGameStatus("levelComplete");
+      posthog.capture("level_completed", {
+        game: "trash_truck",
+        level: currentLevel,
+      });
     } else {
       setGameStatus("won");
+      posthog.capture("game_won", {
+        game: "trash_truck",
+        total_levels: levels.length,
+      });
     }
-  }, [currentLevel]);
+  }, [currentLevel, posthog]);
 
   const continueToNextLevel = useCallback(() => {
     initializeLevel(currentLevel);
-  }, [currentLevel, initializeLevel]);
+    posthog.capture("continue_to_level", {
+      game: "trash_truck",
+      level: currentLevel,
+    });
+  }, [currentLevel, initializeLevel, posthog]);
 
   useEffect(() => {
     if (gameStatus === "playing" && trashBins.every((bin) => bin.isEmpty)) {
