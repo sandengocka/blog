@@ -12,10 +12,10 @@ export const metadata: Metadata = {
     default: "sanden",
     template: "%s | sanden",
   },
-  description: "sanden's peronsal blog",
+  description: "sanden's personal blog",
   openGraph: {
     title: "sanden",
-    description: "sanden's peronsal blog",
+    description: "sanden's personal blog",
     url: baseUrl,
     siteName: "sanden",
     locale: "en_US",
